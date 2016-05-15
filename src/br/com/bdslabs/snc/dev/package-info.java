@@ -5,4 +5,4 @@
  * @author mbarbado
  *
  */
-package br.com.bdslabs.jsnc.dev;
+package br.com.bdslabs.snc.dev;

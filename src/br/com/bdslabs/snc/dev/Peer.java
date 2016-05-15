@@ -1,10 +1,12 @@
 /**
  * 
  */
-package br.com.bdslabs.jsnc.dev;
+package br.com.bdslabs.snc.dev;
 
+import java.io.IOException;
 import java.net.Proxy;
 import java.net.Socket;
+import java.net.UnknownHostException;
 
 /**
  * @author mbarbado
@@ -14,8 +16,9 @@ public class Peer{
 
 /*
  *********************************************************************
- *******	DECLARATION(S)
+ *******  ATTRIBUTE(S)/FIELD(S)
  *******
+ *******  Declarations.
  *********************************************************************
  */
 
@@ -31,9 +34,25 @@ public class Peer{
  *********************************************************************
  */
 
+/**
+ * Used to start a chat with more than two parts.
+ * 
+ */
 	public Peer(){
 		
 		this.socketSocket = new Socket(Proxy.NO_PROXY);
+	}
+
+/**
+ * This constructor method is a fast way to start a private chat.
+ * 
+ * @throws IOException 
+ * @throws UnknownHostException 
+ * 
+ */
+	public Peer(String str_remote_address, int int_port_number) throws UnknownHostException, IOException{
+		
+		this.socketSocket = new Socket(str_remote_address, int_port_number);
 	}
 
 /*
@@ -51,19 +70,20 @@ public class Peer{
  */
 
 /**
+ * Blocks and listens.
  * 
  */
-	public void sendStuff(){
+	public void playServer(){
 		
 		
-	} // sendStuff() method end.
+	} // playServer() method end.
 
 /**
+ * Tries to establish connection.
  * 
  */
-	public void receiveStuff(){
+	public void playClient(){
 		
 		
-	} // receiveStuff() method end.
-
+	} // playClient() method end.
 }
