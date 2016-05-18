@@ -5,7 +5,11 @@
  *******
  *******	File "SimpleNetworkCommunicator.java".
  *******
- *******	Copyright (c) 2016 Marcio Barbado, Jr.
+ *******	Copyright (c) 2016 Anderson Misson
+ *******                       Danilo de Araujo Vasconcellos
+ *******                       Marcio Barbado, Jr.
+ *******                       Marcos
+ *******                       Roger Coudounarakis
  *******
  *******	Bachelor's degree in Computer Science, Brazil
  *******
@@ -44,26 +48,37 @@
 
 package br.com.bdslabs.snc.dev;
 
-import br.com.bdslabs.osi.dev.OperatingSystemIdentifier;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.Scanner;
+
+import br.com.bdslabs.oss.dev.OperatingSystemSpecific;
 
 /**
  * <p>
  *   The SimpleNetworkCommunicator class provides conditions for a
- *   simple chat, supporting file sharing and crypto.
+ *   simple chat, supporting file distribution and crypto.
+ * </p>
+ * <p>
+ *   Multicast sockets for peer-to-peer communication is possible with
+ *   UDP packets, but these are not secure. Thus,
+ *   SimpleNetworkCommunicator presents a unicast architecture. It
+ *   performs one-to-many peer-to-peer actions.
+ * </p>
+ * <p>
+ *   In peer-to-peer (P2P) networks, each node can act as both a
+ *   server and a client, which makes it scalable for file
+ *   distribution.
+ * </p>
+ * <p>
+ *   To reduce file distribution time within such model can be
+ *   addressed [3].
  * </p>
  * <p>
  *   It uses Berkeley Sockets from the transport layer.
  * </p>
  * <p>
  *   The SOCKET primitive, present on Berkeley UNIX [2].
- * </p>
- * <p>
- *   A multicast socket
- *   Its architecture is unicast-based.
- * </p>
- * <p>
- *   Multicast socket for peer-to-peer communication is possible with
- *   UDP packets, which is not secure.
  * </p>
  * <p>
  *   A multiple unicast poses as better solution then. A multicast one
@@ -78,10 +93,15 @@ import br.com.bdslabs.osi.dev.OperatingSystemIdentifier;
  * 
  * REFERENCES
  * 
- * [1] Considerations for Choosing Unicast or Multicast
+ * [1]	Considerations for Choosing Unicast or Multicast
  * https://docs.oracle.com/middleware/1212/wls/CLUST/features.htm#CLUST695
  * 
- * [2] REDES DE COMPUTADORES - Andrew S. Tanenbaum
+ * [2]	REDES DE COMPUTADORES - Andrew S. Tanenbaum
+ * 
+ * [3]	Minimizing Distribution Time for One-to-Many File Distribution
+ * 		in P2P Networks - Hongyun Zheng and Hongfang Yu
+ * 		Proceedings of the 2015 International Conference on Electrical
+ * 		and Information Technologies for Rail Transportation
  * 
  * @author		Anderson Misson <missonsama@gmail.com>
  * @author		Danilo
@@ -130,6 +150,58 @@ public class SimpleNetworkCommunicator{
  *********************************************************************
  */
 
+/**
+ * Parses ".csv" files.
+ * 
+ */
+	static BufferedReader parseCSV(String str_File) throws Exception{
+	
+/*
+ *********************************************************************
+ *******  METHOD DECLARATION(S)
+ *******
+ *********************************************************************
+ */
+
+		String				str_CSVFile;
+		BufferedReader		linesBufferedReader;
+		
+/*
+ *********************************************************************
+ *******  METHOD INITIALIZATION(S)
+ *******
+ *********************************************************************
+ */
+		
+		str_CSVFile 		= str_File;
+		// linesBufferedReader	= null;
+		// linesBufferedReader	= new BufferedReader(new FileReader(str_CSVFile));
+
+/*
+ *********************************************************************
+ *******	METHOD BODY
+ *******
+ *********************************************************************
+ */
+		
+		try{
+			
+			/* BufferedReader used with FileReader improve reading performance. */
+			linesBufferedReader	= new BufferedReader(new FileReader(str_CSVFile));
+			
+			return linesBufferedReader;
+		}
+		
+		catch(Exception exceptionException){
+			
+			System.err.print("\nThere is a problem with file " + str_CSVFile + ". Maybe it was not found.\n" +
+			                 "Working directory is " + System.getProperty("user.dir") + "\n");
+			exceptionException.printStackTrace();
+		}
+		
+		return null;
+	} /* Method parseCSV() end. */
+	
 /*
  *********************************************************************
  *******  MAIN METHOD
@@ -145,30 +217,43 @@ public class SimpleNetworkCommunicator{
 
 /*
  *********************************************************************
- *******  MAIN METHOD DECLARATIONS
+ *******  MAIN METHOD DECLARATION(S)
  *******
+ *******  For a constantly muting string, and for method chaining,
+ *******  using StringBuilder is advisable because it provides
+ *******  efficiency.
  *********************************************************************
  */
 		
-		boolean						bool_loop;
-		boolean[]					bool_discover_operating_system;
-		int							int_port;
-		String						str_address;
-		String						str_topo;
-		String						str_usage;
-		Peer						peerPeer;
-		OperatingSystemIdentifier	operatingSystemIdentifier;
+		boolean[]				bool_discover_operating_system;
+		int						int_port;
+		int						int_error_code;
+		String					str_topo;
+		String					str_usage;
+		String					str_request_message;
+		String					str_group_file;
+		String					str_id_file;
+		String					str_Line;
+		String					str_address_and_port;
+		String[]				str_LineValuesArray;
+		StringBuilder			addressStringBuilder;
+		StringBuilder			nicknameStringBuilder;
+		BufferedReader			readCSVBufferedReader;
+	    Scanner					scannerScanner;
+	    
+		OperatingSystemSpecific	operatingSystemSpecific;
+		Peer					peerPeer;
 
 /*
  *********************************************************************
- *******  MAIN METHOD INITIALIZATIONS
+ *******  MAIN METHOD INITIALIZATION(S)
  *******
  *********************************************************************
  */
 		
-		bool_loop					= false;
-		int_port					= Integer.parseInt(args[1]);
-		str_address					= args[0];
+		int_error_code				= 0;
+		int_port					= args.length <= 1 ? 0 : Integer.parseInt(args[1]);
+		addressStringBuilder		= args.length == 0 ? new StringBuilder() : new StringBuilder(args[0]);
 		str_topo					= " ------------------------------------------------------\n" +
 		                              "|                                                      |\n" +
 		                              "| ▄██▀██▄ ██   ██ ▄██▀██▄                              |\n" +
@@ -179,52 +264,97 @@ public class SimpleNetworkCommunicator{
 		                              "| license: GNU GPL v2                                  |\n" +
 		                              "|                                                      |\n" +
 		                              " ------------------------------------------------------\n";
-		str_usage					= "usage: java SimpleNetworkCommunicator [ADDRESS] [PORT]\n";
-		operatingSystemIdentifier	= new OperatingSystemIdentifier();
+		str_usage					= "usage example for one-to-one communication:\n" +
+		                              "java SimpleNetworkCommunicator [ADDRESS] [PORT]\n";
+		str_request_message			= "Please provide address and port or Q to quit:\n";
+		str_address_and_port		= "";
+		str_group_file				= "src/br/com/bdslabs/snc/dev/.group.csv";
+		str_id_file					= "src/br/com/bdslabs/snc/dev/.id.csv";
+		nicknameStringBuilder		= new StringBuilder();
+		str_Line					= "";
+	    scannerScanner				= new Scanner(System.in);
+		operatingSystemSpecific		= new OperatingSystemSpecific();
+		peerPeer					= new Peer();
 
 /*
  *********************************************************************
  *******	MAIN METHOD BODY
  *******
- *******	To see all system information:
- *******
- *******	System.getProperties().list(System.out);
  *********************************************************************
  */
 		
-		// bool_discover_operating_system = operatingSystemIdentifier.descubraSistemaOperacional();
+		bool_discover_operating_system	= operatingSystemSpecific.descubraSistemaOperacional();
+		readCSVBufferedReader			= parseCSV(str_id_file);
 		
-		do{
+		while (bool_discover_operating_system[0] == false){
 			
-			operatingSystemIdentifier.clearConsole(false);
-			System.out.print(str_topo);
+			while ((str_Line = readCSVBufferedReader.readLine()) != null){
+		    	
+				str_LineValuesArray		= str_Line.split(",");
+		    	nicknameStringBuilder.append(str_LineValuesArray[1]);
+		    }
+		    
+			readCSVBufferedReader.close();
+		    readCSVBufferedReader = parseCSV(str_group_file);
 			
-			if (args.length != 2){
+			while ((str_Line = readCSVBufferedReader.readLine()) != null){
+		    	
+		    	/* Each line. */
+		    	str_LineValuesArray = str_Line.split(",");
+		        /* Example to print the first column. */
+		        // System.out.println(str_LineValuesArray[0]);
+		    }
+			
+			readCSVBufferedReader.close();
+			
+			do{
 				
-	            System.err.println(str_usage);
-	            System.exit(1);
-	        }
-			
-			if (true){
+				operatingSystemSpecific.clearConsole(bool_discover_operating_system[1]);
 				
-				peerPeer	= new Peer(str_address, int_port);
-				bool_loop	= false;
-			}
-			
-			else if (true){
+				System.out.print("\n" + str_topo + "Hello " + System.getProperty("user.name", nicknameStringBuilder.toString()) + ".\n");
 				
-				peerPeer	= new Peer();
-				bool_loop	= false;
-			}
-			
-			else{
+				if (int_error_code	== 1){
+					
+					System.err.print(str_usage);
+				}
 				
-				bool_loop	= false;
-			}
-			
-		} while (bool_loop);
-		
-		System.exit(0);
+				if (args.length == 2){
+					
+					peerPeer	= new Peer(addressStringBuilder.toString(), int_port);
+				}
+				
+				else if (args.length == 0){
+					
+					System.out.print(str_request_message);
+					
+					str_address_and_port	= scannerScanner.next();					
+					addressStringBuilder.append(str_address_and_port);
+					int_port				= Integer.parseInt(str_address_and_port);
+					
+					peerPeer	= new Peer();
+				}
+				
+				else{
+					
+					int_error_code	= 1;
+				}
+				
+				/* Play the client role. */
+				if (true){
+					
+					peerPeer.playClient(addressStringBuilder.toString());
+				}
+				
+				/* Play the server role. */
+				else{
+					
+					peerPeer.playServer();
+				}
+				
+			} while (int_error_code != 0 && str_request_message.toLowerCase() != "q");
+		}
+
+		System.exit(int_error_code);
 
 	} /* Method main() end. */
 
