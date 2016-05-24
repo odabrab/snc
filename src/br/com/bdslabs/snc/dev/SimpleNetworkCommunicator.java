@@ -50,6 +50,13 @@ package br.com.bdslabs.snc.dev;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.Scanner;
 
 import br.com.bdslabs.oss.dev.OperatingSystemSpecific;
@@ -168,6 +175,78 @@ public class SimpleNetworkCommunicator{
  *******
  *********************************************************************
  */
+	
+/**
+ * Position
+ * 
+ * 0:		loopback
+ * 1:		private (LAN)
+ * 2:		public (external)
+ * 
+ * @throws IOException 
+ * 
+ */
+	static ArrayList<String> obtainAvailableLocalAddresses() throws IOException{
+
+/*
+ *********************************************************************
+ *******  METHOD DECLARATION(S)
+ *******
+ *********************************************************************
+ */
+		
+		ArrayList<String>				str_AddressesArrayList;
+		ArrayList<String>				str_PrivateAddressesArrayList;
+		BufferedReader					inBufferedReader;
+		String							str_LoopbackAddress;
+		String							str_public_IP;
+		URL								testURL;
+
+/*
+ *********************************************************************
+ *******  METHOD INITIALIZATION(S)
+ *******
+ *********************************************************************
+ */
+		
+		str_AddressesArrayList			= new ArrayList<String>();
+		/* Private address. */
+		Enumeration<NetworkInterface> enumerationNetworkInterface = NetworkInterface.getNetworkInterfaces();
+		str_PrivateAddressesArrayList	= new ArrayList<String>();
+		/* Loopback address. */
+		str_LoopbackAddress 			= InetAddress.getLocalHost().getHostAddress();
+		/* Public address. */
+		testURL							= new URL("http://checkip.amazonaws.com");
+		inBufferedReader				= new BufferedReader(new InputStreamReader(testURL.openStream()));
+		str_public_IP					= inBufferedReader.readLine();
+
+/*
+ *********************************************************************
+ *******	METHOD BODY
+ *******
+ *********************************************************************
+ */
+		
+		while(enumerationNetworkInterface.hasMoreElements()){
+			
+			NetworkInterface networkInterface				= enumerationNetworkInterface.nextElement();
+			Enumeration<InetAddress> enumerationInetAddress	= networkInterface.getInetAddresses();
+			
+			while (enumerationInetAddress.hasMoreElements()){
+				
+				InetAddress inetAddr = enumerationInetAddress.nextElement();
+				str_PrivateAddressesArrayList.add(inetAddr.getHostAddress());
+			}
+		}
+		
+		inBufferedReader.close();
+		
+		str_AddressesArrayList.add(str_LoopbackAddress);
+		str_AddressesArrayList.add(str_PrivateAddressesArrayList.get(2));
+		str_AddressesArrayList.add(str_public_IP);
+		
+		return str_AddressesArrayList;
+	} /* Method obtainExternalIP() end. */
 
 /**
  * Parses ".csv" files.
@@ -244,27 +323,27 @@ public class SimpleNetworkCommunicator{
  *********************************************************************
  */
 		
-		boolean[]				bool_discover_operating_system;
+		ArrayList<Integer>		groupFilePortsIntegerArrayList;
+		/* All addresses on the group file. */
+		ArrayList<String>		str_GroupFileAddressesArrayList;
+		/* All of the addresses which are available to local peer. */
+		ArrayList<String>		str_LocalAddressesArrayList;
+		ArrayList<String[]>		str_GroupFileValuesArrayList;
 		BufferedReader			readCSVBufferedReader;
 		int						int_action;
 		int						int_error_code;
-		int						int_remote_peers;
-		int[]					intPort;
+		int						int_index;
+		OperatingSystemSpecific	operatingSystemSpecific;
+		Peer					peerPeer;
+		Scanner					scannerScanner;
 		String					str_topo;
 		String					str_usage;
-		String					str_request_message;
 		String					str_group_file;
 		String					str_id_file;
 		String					str_Line;
-		String					str_address_and_port;
-		String[]				str_AddressesArray;
-		String[]				str_LineValuesArray;
+		String[]				str_IDFileValuesArray;
 		StringBuilder			messageStringBuilder;
-		StringBuilder			nicknameStringBuilder;
-	    Scanner					scannerScanner;
-	    
-		OperatingSystemSpecific	operatingSystemSpecific;
-		Peer					peerPeer;
+		StringBuilder[]			discoverOSStringBuilderArray;
 
 /*
  *********************************************************************
@@ -273,33 +352,37 @@ public class SimpleNetworkCommunicator{
  *********************************************************************
  */
 		
-		int_action					= -1;
-		int_error_code				= 0;
-		intPort						= null;
-		int_remote_peers			= 0;
-		str_AddressesArray			= null;
-		str_topo					= " ------------------------------------------------------\n" +
-		                              "|                                                      |\n" +
-		                              "| ▄██▀██▄ ██   ██ ▄██▀██▄                              |\n" +
-		                              "| ▀██▄▄   ███▄ ██ ██                                   |\n" +
-		                              "|   ▀▀██▄ ██ ▀███ ██                                   |\n" +
-		                              "| ▀██▄██▀ ██   ██ ▀██▄██▀  SIMPLE NETWORK COMMUNICATOR |\n" +
-		                              "|                                                      |\n" +
-		                              "| license: GNU GPL v2                                  |\n" +
-		                              "|                                                      |\n" +
-		                              " ------------------------------------------------------\n";
-		str_usage					= "usage example for one-to-one communication:\n" +
-		                              "java SimpleNetworkCommunicator [ADDRESS] [PORT]\n";
-		str_request_message			= "Please provide address and port or Q to quit:\n";
-		str_address_and_port		= "";
-		str_group_file				= "src/br/com/bdslabs/snc/dev/.group.csv";
-		str_id_file					= "src/br/com/bdslabs/snc/dev/.id.csv";
-		messageStringBuilder		= new StringBuilder();
-		nicknameStringBuilder		= new StringBuilder();
-		str_Line					= "";
-	    scannerScanner				= new Scanner(System.in);
-		operatingSystemSpecific		= new OperatingSystemSpecific();
-		peerPeer					= new Peer();
+		groupFilePortsIntegerArrayList	= new ArrayList<Integer>();
+		str_GroupFileAddressesArrayList = new ArrayList<String>();
+		str_LocalAddressesArrayList		= new ArrayList<String>();
+		str_GroupFileValuesArrayList	= new ArrayList<String[]>();
+		int_action						= -1;
+		int_error_code					= 0;
+		int_index						= 0;
+		str_topo						= " ------------------------------------------------------\n" +
+		                                  "|                                                      |\n" +
+		                                  "| ▄██▀██▄ ██   ██ ▄██▀██▄                              |\n" +
+		                                  "| ▀██▄▄   ███▄ ██ ██                                   |\n" +
+		                                  "|   ▀▀██▄ ██ ▀███ ██                                   |\n" +
+		                                  "| ▀██▄██▀ ██   ██ ▀██▄██▀  SIMPLE NETWORK COMMUNICATOR |\n" +
+		                                  "|                                                      |\n" +
+		                                  "| license: GNU GPL v2                                  |\n" +
+		                                  "|                                                      |\n" +
+		                                  " ------------------------------------------------------\n";
+		str_usage						= "usage example for one-to-one communication:\n" +
+		                                  "java SimpleNetworkCommunicator [ADDRESS] [PORT]\n";
+		str_group_file					= "src/br/com/bdslabs/snc/dev/.group.csv";
+		str_id_file						= "src/br/com/bdslabs/snc/dev/.id.csv";
+		messageStringBuilder			= new StringBuilder();
+		str_Line						= "";
+		operatingSystemSpecific			= new OperatingSystemSpecific();
+		peerPeer						= new Peer();
+		scannerScanner					= new Scanner(System.in);
+		discoverOSStringBuilderArray	= operatingSystemSpecific.identifyOSStringBuilderArray();
+		
+	    /* Reads id file (one line). */
+		readCSVBufferedReader			= parseCSV(str_id_file);
+	    str_IDFileValuesArray			= (str_Line = readCSVBufferedReader.readLine()) != null ? str_Line.split("\" *, *\"") : null;
 
 /*
  *********************************************************************
@@ -309,74 +392,79 @@ public class SimpleNetworkCommunicator{
  *********************************************************************
  */
 		
-		bool_discover_operating_system	= operatingSystemSpecific.descubraSistemaOperacional();
-		readCSVBufferedReader			= parseCSV(str_id_file);
+		/* It was open on initialization section. */
+		readCSVBufferedReader.close();
 		
-		while (bool_discover_operating_system[0] == false){
+		if (discoverOSStringBuilderArray[1].equals("FLAG")){
+			
+			int_error_code = 6;
+			System.err.print("\nException " + int_error_code + ": operating system not allowed.\n");
+			System.exit(int_error_code);
+		}
+		
+		operatingSystemSpecific.clearConsole(discoverOSStringBuilderArray[0].indexOf("indows") != -1);
+		
+		str_LocalAddressesArrayList = obtainAvailableLocalAddresses();
+
+		System.out.print(str_topo +
+		                 "\nHello " + System.getProperty("user.name", str_IDFileValuesArray[1]) + ".\n" +
+		                 discoverOSStringBuilderArray[0] +
+		                 "loopback IP in use:\t" + str_LocalAddressesArrayList.get(0) + "\n" +
+		                 "internal IP in use:\t" + str_LocalAddressesArrayList.get(1) + "\n" +
+                         "external IP in use:\t" + str_LocalAddressesArrayList.get(2) + "\n");
+		
+		/* Use address and port from command line. */
+		if (args.length == 2){
+				
+			/* TODO: handle input. */
+			peerPeer = new Peer(args[0], Integer.parseInt(args[1]));
+		}
+		
+		/* Use addresses and ports from file. */
+		else if (args.length == 0){
+			
+			/* Reads group file (multiple lines). */
+			readCSVBufferedReader	= parseCSV(str_group_file);
+			
+		    System.out.print("\n" +
+                             "G R O U P\n" +
+		    		         "\n");
 			
 			while ((str_Line = readCSVBufferedReader.readLine()) != null){
-		    	
-				str_LineValuesArray		= str_Line.split(",");
-		    	nicknameStringBuilder.append(str_LineValuesArray[1]);
-		    }
-		    
-			readCSVBufferedReader.close();
-		    readCSVBufferedReader = parseCSV(str_group_file);
-			
-			while ((str_Line = readCSVBufferedReader.readLine()) != null){
-		    	
-		    	/* Each line. */
-		    	str_LineValuesArray = str_Line.split(",");
-		        /* Example to print the first column. */
-		        // System.out.println(str_LineValuesArray[0]);
-		    }
-			
+
+				/* Each line is added, in a FIFO scheme. */
+				str_GroupFileValuesArrayList.add(str_Line.split("\" *, *\""));
+				str_GroupFileAddressesArrayList.add(str_GroupFileValuesArrayList.get(int_index)[4]);
+				groupFilePortsIntegerArrayList.add(new Integer(str_GroupFileValuesArrayList.get(int_index)[5].replaceAll("\"", "")));
+			    /* Print the second column (user name). */
+			    System.out.print("* " + str_GroupFileValuesArrayList.get(int_index)[1] + "\n");
+			    
+			    int_index++;
+			}
+				
 			readCSVBufferedReader.close();
 			
-			do{
+			/* Nice trick on method toArray(), passing an array as argument. */
+			peerPeer = new Peer(str_GroupFileAddressesArrayList.toArray(new String[0]), groupFilePortsIntegerArrayList.toArray(new Integer[0]));
+		}
+		
+		else{
 				
-				operatingSystemSpecific.clearConsole(bool_discover_operating_system[1]);
+			System.err.print("\nException 001: " + str_usage);
+			System.exit(1);
+		}
+		
+		/* Main loop. */
+		do{
 				
-				System.out.print("\n" + str_topo + "Hello " + System.getProperty("user.name", nicknameStringBuilder.toString()) + ".\n");
-				
-				if (int_error_code	== 1){
-					
-					System.err.print(str_usage);
-				}
-				
-				if (args.length == 2){
-					
-					/* Input may be handled. */
-					str_AddressesArray[0]	= new StringBuilder(args[0]).toString();
-					intPort[0]				= Integer.parseInt(args[1]);
-					peerPeer				= new Peer(str_AddressesArray, intPort);
-				}
-				
-				else if (args.length == 0){
-					
-					do{
-						
-						System.out.print(str_request_message);
-						
-						str_address_and_port					= scannerScanner.next();
-						str_AddressesArray[int_remote_peers]	= str_address_and_port.split(" ")[0];
-						intPort[int_remote_peers++]				= Integer.parseInt(str_address_and_port.split(" ")[1]);
-						peerPeer								= new Peer(str_AddressesArray, intPort);
-					} while(!str_address_and_port.equalsIgnoreCase("Q") && !str_address_and_port.equalsIgnoreCase("C"));
-				}
-				
-				else{
-					
-					int_error_code	= 1;
-				}
-				
-				System.out.print("\nCHOOSE ACTION:\n" +
-				                 "\n" +
-						         "0) quit\n" +
-				                 "1) send text\n" +
-						         "2) send file\n" +
-				                 "3) receive file\n");
-				int_action = Integer.parseInt(scannerScanner.next());
+			System.out.print("\nCHOOSE ACTION:\n" +
+			                 "\n" +
+					         "0) quit\n" +
+			                 "1) send text\n" +
+					         "2) send file\n" +
+			                 "3) receive file\n");
+
+			int_action = Integer.parseInt(scannerScanner.next());
 				
 				switch(int_action){
 				
@@ -408,7 +496,8 @@ public class SimpleNetworkCommunicator{
 					
 					default: {
 						
-						
+						peerPeer.playServer();
+						break;
 					}
 				}
 				
@@ -417,9 +506,9 @@ public class SimpleNetworkCommunicator{
 					/* Play the server role. */
 					peerPeer.playServer();
 				}
-			} while (int_error_code != 0 && str_request_message.toLowerCase() != "q");
-		}
+			} while (int_error_code != 0 && int_action != 0);
 
+		scannerScanner.close();
 		System.exit(int_error_code);
 
 	} /* Method main() end. */

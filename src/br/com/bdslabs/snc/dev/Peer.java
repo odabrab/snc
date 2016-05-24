@@ -42,10 +42,8 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
-import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketAddress;
 import java.net.UnknownHostException;
 
 /**
@@ -122,10 +120,45 @@ public class Peer{
  * @throws UnknownHostException 
  * 
  */
+	public Peer(String str_RemotePeer, int int_remote_port) throws UnknownHostException, IOException{
+			
+		this.strRemoteAddresses[0]		= str_RemotePeer;
+		this.intRemotePortNumbers[0]	= int_remote_port;
+	} // Peer() constructor method end.
+	
+/**
+ * 
+ * @throws IOException 
+ * @throws UnknownHostException 
+ * 
+ */
 	public Peer(String[] strRemotePeers, int[] intRemotePorts) throws UnknownHostException, IOException{
 		
 		this.strRemoteAddresses		= strRemotePeers;
 		this.intRemotePortNumbers	= intRemotePorts;
+	} // Peer() constructor method end.
+
+/**
+ * Performs an autoboxing iteration.
+ * Converts an Integer array to an int array.
+ * 
+ * @throws IOException 
+ * @throws UnknownHostException 
+ * 
+ */
+	public Peer(String[] strRemotePeers, Integer[] remotePortsIntegerArray) throws UnknownHostException, IOException{
+		
+		final int[] int_remotePortsArray;
+		
+		int_remotePortsArray = new int[remotePortsIntegerArray.length];
+		
+        for (int i = 0; i < remotePortsIntegerArray.length; i++) {
+        	
+        	int_remotePortsArray[i] = remotePortsIntegerArray[i].intValue();
+        }
+		
+		this.strRemoteAddresses		= strRemotePeers;
+		this.intRemotePortNumbers	= int_remotePortsArray;
 	} // Peer() constructor method end.
 	
 /*
@@ -182,9 +215,9 @@ public class Peer{
 		serverDataOutputStream			= null;
 		printStream						= null;
 		
-		serverSocket					= null;
-		clientSocket					= null;
-		newServerSocket					= null;
+		serverSocket					= new ServerSocket[this.strRemoteAddresses.length];
+		clientSocket					= new Socket[this.strRemoteAddresses.length];
+		newServerSocket					= new Socket[this.strRemoteAddresses.length];
 		messageFromClientStringBuilder	= new StringBuilder();
 
 /*
@@ -245,7 +278,7 @@ public class Peer{
 			System.err.print("\nException 005: unknown host.\n" +
                              "Unknown host exception: " + unknownHostException.getMessage() + "\n");
 			unknownHostException.printStackTrace();
-			System.exit(5);			
+			System.exit(5);
 		}
 		
 		catch(IOException ioException){
