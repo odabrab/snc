@@ -63,44 +63,56 @@ import br.com.bdslabs.oss.dev.OperatingSystemSpecific;
 
 /**
  * <p>
- *   The SimpleNetworkCommunicator class uses UNIX Berkeley Sockets to
- *   provide conditions for a simple chat, supporting file
+ *   The deepest a regular Java application reach is the transport
+ *   layer. So, the SimpleNetworkCommunicator class uses UNIX Berkeley
+ *   Sockets to provide conditions for a simple chat, supporting file
  *   distribution and crypto.
- *   According to UNIX, a network communication is a type of I/O. Each
- *   process has a set of I/O descriptors to write to or read from,
- *   and such descriptors may refer to files, devices or communication
- *   channels (sockets) [4].
+ *   The UNIX Berkeley Sockets are a set of primitives which include
+ *   the SOCKET primitive itself [2].
+ *   According to UNIX, a network communication is a type of I/O, thus
+ *   a socket is built according to a paradigm usually referred to as
+ *   Open-Read-Write-Close.
+ * </p>
+ * <p>
+ *   Each UNIX process has a set of I/O descriptors to write to or
+ *   read from, and such descriptors may refer to files, devices or
+ *   communication channels (sockets) [4].
+ * </p>
+ * <p>
  *   IPC operations are based on socket pairs. A socket in one process
  *   transmits some data to another socket in another process [4].
  *   Socket programming can use stream communication (TCP/IP) or
  *   datagram communication (UDP/IP).
- *   Multicast sockets for peer-to-peer communication are feasible
- *   with UDP packets, but these are not secure. Moreover, UDP is a
- *   connectionless protocol, meaning that each time one sends
- *   datagrams, he also needs to send the local socket descriptor and
- *   the receiving socket's address. Not to mention a datagram size
- *   limit is 64 kilobytes.
- *   TCP is connection-oriented and it has a setup time, and no size
- *   limit.
- *   Thus, SimpleNetworkCommunicator presents a unicast architecture. It
- *   performs one-to-many peer-to-peer actions.
+ * </p>
+ * <p>
+ *   Since this application is a chat, Multicast sockets were
+ *   considered.
+ *   Well, turns out SNC is more than a chat. It implements a
+ *   peer-to-peer chat. And that is due to the fact there are many
+ *   concerns with conversations' quality.
+ * </p>
+ * <p>
+ *   So, even though multicast sockets for peer-to-peer communications
+ *   are feasible with UDP packets, those sockets would not meet the
+ *   application needs. UDP is a connectionless protocol, meaning that
+ *   each time one sends datagrams, he also needs to send the local
+ *   socket descriptor and the receiving socket's address. Not to
+ *   mention a datagram size limit is 64 kilobytes.
+ * </p>
+ * <p>
+ *   Now TCP, besides being connection-oriented, it has a setup time,
+ *   and no size limit.
+ * </p>
+ * <p>
+ *   Thus, SimpleNetworkCommunicator makes use of TCP to present a
+ *   multiple-unicast architecture, this way managing to perform
+ *   one-to-many peer-to-peer actions.
  * </p>
  * <p>
  *   In peer-to-peer (P2P) networks, each node can act as both a
- *   server and a client, which makes it scalable for file
- *   distribution.
- * </p>
- * <p>
- *   To reduce file distribution time within such model can be
- *   addressed [3].
- * </p>
- * <p>
- *   It uses Berkeley Sockets from the transport layer. These were
- *   built with a paradigm usually referred to as
- *   Open-Read-Write-Close.
- * </p>
- * <p>
- *   The SOCKET primitive, present on Berkeley UNIX [2].
+ *   server and a client, which makes such architecture scalable for
+ *   file distribution. And reduction of file distribution time within
+ *   such model can be addressed [3].
  * </p>
  * <p>
  *   A multiple unicast poses as better solution then. A multicast one
@@ -111,7 +123,10 @@ import br.com.bdslabs.oss.dev.OperatingSystemSpecific;
  *   224.0.0.0 to 239.255.255.255) so for example, a multicast address
  *   could be 224.0.0.2.
  * </p>
- * Packet duplication at routing nodes.
+ * <p>
+ *   Packet duplication at routing nodes constitute a multicast issue.
+ * </p>
+ * 
  * 
  * REFERENCES
  * 
@@ -151,6 +166,7 @@ public class SimpleNetworkCommunicator{
 /*
  *********************************************************************
  *******	CONSTRUCTOR METHOD(S)
+ *******
  *********************************************************************
  */
 
@@ -209,16 +225,16 @@ public class SimpleNetworkCommunicator{
  *********************************************************************
  */
 		
-		str_AddressesArrayList			= new ArrayList<String>();
+		str_AddressesArrayList										= new ArrayList<String>();
 		/* Private address. */
-		Enumeration<NetworkInterface> enumerationNetworkInterface = NetworkInterface.getNetworkInterfaces();
-		str_PrivateAddressesArrayList	= new ArrayList<String>();
+		Enumeration<NetworkInterface> enumerationNetworkInterface	= NetworkInterface.getNetworkInterfaces();
+		str_PrivateAddressesArrayList								= new ArrayList<String>();
 		/* Loopback address. */
-		str_LoopbackAddress 			= InetAddress.getLocalHost().getHostAddress();
+		str_LoopbackAddress 										= InetAddress.getLocalHost().getHostAddress();
 		/* Public address. */
-		testURL							= new URL("http://checkip.amazonaws.com");
-		inBufferedReader				= new BufferedReader(new InputStreamReader(testURL.openStream()));
-		str_public_IP					= inBufferedReader.readLine();
+		testURL														= new URL("http://checkip.amazonaws.com");
+		inBufferedReader											= new BufferedReader(new InputStreamReader(testURL.openStream()));
+		str_public_IP												= inBufferedReader.readLine();
 
 /*
  *********************************************************************
@@ -359,6 +375,8 @@ public class SimpleNetworkCommunicator{
 		int_action						= -1;
 		int_error_code					= 0;
 		int_index						= 0;
+		peerPeer						= new Peer();
+		scannerScanner					= new Scanner(System.in);
 		str_topo						= " ------------------------------------------------------\n" +
 		                                  "|                                                      |\n" +
 		                                  "| ▄██▀██▄ ██   ██ ▄██▀██▄                              |\n" +
@@ -373,11 +391,9 @@ public class SimpleNetworkCommunicator{
 		                                  "java SimpleNetworkCommunicator [ADDRESS] [PORT]\n";
 		str_group_file					= "src/br/com/bdslabs/snc/dev/.group.csv";
 		str_id_file						= "src/br/com/bdslabs/snc/dev/.id.csv";
-		messageStringBuilder			= new StringBuilder();
 		str_Line						= "";
 		operatingSystemSpecific			= new OperatingSystemSpecific();
-		peerPeer						= new Peer();
-		scannerScanner					= new Scanner(System.in);
+		messageStringBuilder			= new StringBuilder();
 		discoverOSStringBuilderArray	= operatingSystemSpecific.identifyOSStringBuilderArray();
 		
 	    /* Reads id file (one line). */
@@ -388,7 +404,6 @@ public class SimpleNetworkCommunicator{
  *********************************************************************
  *******	MAIN METHOD BODY
  *******
- *******	Some print and scan.
  *********************************************************************
  */
 		
@@ -406,17 +421,11 @@ public class SimpleNetworkCommunicator{
 		
 		str_LocalAddressesArrayList = obtainAvailableLocalAddresses();
 
-		System.out.print(str_topo +
-		                 "\nHello " + System.getProperty("user.name", str_IDFileValuesArray[1]) + ".\n" +
-		                 discoverOSStringBuilderArray[0] +
-		                 "loopback IP in use:\t" + str_LocalAddressesArrayList.get(0) + "\n" +
-		                 "internal IP in use:\t" + str_LocalAddressesArrayList.get(1) + "\n" +
-                         "external IP in use:\t" + str_LocalAddressesArrayList.get(2) + "\n");
+		System.out.print(str_topo);
 		
 		/* Use address and port from command line. */
 		if (args.length == 2){
 				
-			/* TODO: handle input. */
 			peerPeer = new Peer(args[0], Integer.parseInt(args[1]));
 		}
 		
@@ -427,8 +436,7 @@ public class SimpleNetworkCommunicator{
 			readCSVBufferedReader	= parseCSV(str_group_file);
 			
 		    System.out.print("\n" +
-                             "G R O U P\n" +
-		    		         "\n");
+                             "GROUP\n");
 			
 			while ((str_Line = readCSVBufferedReader.readLine()) != null){
 
@@ -437,12 +445,21 @@ public class SimpleNetworkCommunicator{
 				str_GroupFileAddressesArrayList.add(str_GroupFileValuesArrayList.get(int_index)[4]);
 				groupFilePortsIntegerArrayList.add(new Integer(str_GroupFileValuesArrayList.get(int_index)[5].replaceAll("\"", "")));
 			    /* Print the second column (user name). */
-			    System.out.print("* " + str_GroupFileValuesArrayList.get(int_index)[1] + "\n");
+			    System.out.print("(" + str_GroupFileValuesArrayList.get(int_index)[1] + ") ");
 			    
 			    int_index++;
 			}
-				
+			
 			readCSVBufferedReader.close();
+			
+			System.out.print("\n" +
+			                 "\n" +
+			                 "LOCAL PEER INFORMATION\n" +
+			                 "name:\t\t\t" + System.getProperty("user.name", str_IDFileValuesArray[1]) +
+	                         discoverOSStringBuilderArray[0] +
+	                         "loopback IP in use:\t" + str_LocalAddressesArrayList.get(0) + "\n" +
+	                         "internal IP in use:\t" + str_LocalAddressesArrayList.get(1) + "\n" +
+                             "external IP in use:\t" + str_LocalAddressesArrayList.get(2) + "\n");
 			
 			/* Nice trick on method toArray(), passing an array as argument. */
 			peerPeer = new Peer(str_GroupFileAddressesArrayList.toArray(new String[0]), groupFilePortsIntegerArrayList.toArray(new Integer[0]));
@@ -454,63 +471,56 @@ public class SimpleNetworkCommunicator{
 			System.exit(1);
 		}
 		
-		/* Main loop. */
 		do{
-				
-			System.out.print("\nCHOOSE ACTION:\n" +
-			                 "\n" +
-					         "0) quit\n" +
-			                 "1) send text\n" +
-					         "2) send file\n" +
-			                 "3) receive file\n");
+			
+			/* Print and scan. */
+			System.out.print("\nChoose action and hit enter:\n" +
+                             "\n" +
+                             "0) quit\n" +
+                             "1) send text\n" +
+                             "2) send file\n");
 
-			int_action = Integer.parseInt(scannerScanner.next());
+			/* Who needs threads? :-) */
+			while ((int_action = Integer.parseInt(scannerScanner.next())) == -1){
+			
+				/* Play the server role. */
+				int_error_code = peerPeer.playServer();
+			}
+			
+			switch(int_action){
+			
+			case 0: {
 				
-				switch(int_action){
-				
-					case 0: {
-						
-						break;
-					}
-					
-					/* Play the client role. */
-					case 1: {
-						
-						peerPeer.playClient(messageStringBuilder);
-						break;
-					}
-					
-					/* Send file. */
-					case 2: {
+				System.out.print("\nSo long.\n");
+				System.exit(int_error_code);
+				break;
+			}
+		
+			/* Play the client role. */
+			case 1: {
+			
+				peerPeer.playClient(messageStringBuilder);
+				break;
+			}
+		
+			/* Send file. */
+			case 2: {
 
-						peerPeer.playSeeder(new StringBuilder());
-						break;
-					}
-					
-					/* Receive file. */
-					case 3: {
+				peerPeer.playSeeder(new StringBuilder());
+				break;
+			}
+		
+			default: {
+			
+				break;
+			}
+		}
+			
+			scannerScanner.close();
+		
+		} while (int_error_code != 0 && int_action != 0);
 
-						peerPeer.playLeecher(new StringBuilder());
-						break;
-					}
-					
-					default: {
-						
-						peerPeer.playServer();
-						break;
-					}
-				}
-				
-				if (scannerScanner.next().equals(null)){
-					
-					/* Play the server role. */
-					peerPeer.playServer();
-				}
-			} while (int_error_code != 0 && int_action != 0);
-
-		scannerScanner.close();
 		System.exit(int_error_code);
-
 	} /* Method main() end. */
 
 } /* Class SimpleNetworkCommunicator end. */
