@@ -347,8 +347,8 @@ public class SimpleNetworkCommunicator{
 		ArrayList<String[]>		str_GroupFileValuesArrayList;
 		BufferedReader			readCSVBufferedReader;
 		int						int_action;
-		int						int_error_code;
 		int						int_index;
+		int[]					remotePortAndErrorCodeIntArray;
 		OperatingSystemSpecific	operatingSystemSpecific;
 		Peer					peerPeer;
 		Scanner					scannerScanner;
@@ -368,37 +368,39 @@ public class SimpleNetworkCommunicator{
  *********************************************************************
  */
 		
-		groupFilePortsIntegerArrayList	= new ArrayList<Integer>();
-		str_GroupFileAddressesArrayList = new ArrayList<String>();
-		str_LocalAddressesArrayList		= new ArrayList<String>();
-		str_GroupFileValuesArrayList	= new ArrayList<String[]>();
-		int_action						= -1;
-		int_error_code					= 0;
-		int_index						= 0;
-		peerPeer						= new Peer();
-		scannerScanner					= new Scanner(System.in);
-		str_topo						= " ------------------------------------------------------\n" +
-		                                  "|                                                      |\n" +
-		                                  "| ▄██▀██▄ ██   ██ ▄██▀██▄                              |\n" +
-		                                  "| ▀██▄▄   ███▄ ██ ██                                   |\n" +
-		                                  "|   ▀▀██▄ ██ ▀███ ██                                   |\n" +
-		                                  "| ▀██▄██▀ ██   ██ ▀██▄██▀  SIMPLE NETWORK COMMUNICATOR |\n" +
-		                                  "|                                                      |\n" +
-		                                  "| license: GNU GPL v2                                  |\n" +
-		                                  "|                                                      |\n" +
-		                                  " ------------------------------------------------------\n";
-		str_usage						= "usage example for one-to-one communication:\n" +
-		                                  "java SimpleNetworkCommunicator [ADDRESS] [PORT]\n";
-		str_group_file					= "src/br/com/bdslabs/snc/dev/.group.csv";
-		str_id_file						= "src/br/com/bdslabs/snc/dev/.id.csv";
-		str_Line						= "";
-		operatingSystemSpecific			= new OperatingSystemSpecific();
-		messageStringBuilder			= new StringBuilder();
-		discoverOSStringBuilderArray	= operatingSystemSpecific.identifyOSStringBuilderArray();
+		groupFilePortsIntegerArrayList		= new ArrayList<Integer>();
+		str_GroupFileAddressesArrayList 	= new ArrayList<String>();
+		str_LocalAddressesArrayList			= new ArrayList<String>();
+		str_GroupFileValuesArrayList		= new ArrayList<String[]>();
+		int_action							= -1;
+		int_index							= 0;
+		remotePortAndErrorCodeIntArray		= new int[2];
+		/* Error code set to 0. */
+		remotePortAndErrorCodeIntArray[1]	= 0;
+		peerPeer							= new Peer();
+		scannerScanner						= new Scanner(System.in);
+		str_topo							= " ------------------------------------------------------\n" +
+		                                      "|                                                      |\n" +
+		                                      "| ▄██▀██▄ ██   ██ ▄██▀██▄                              |\n" +
+		                                      "| ▀██▄▄   ███▄ ██ ██                                   |\n" +
+		                                      "|   ▀▀██▄ ██ ▀███ ██                                   |\n" +
+		                                      "| ▀██▄██▀ ██   ██ ▀██▄██▀  SIMPLE NETWORK COMMUNICATOR |\n" +
+		                                      "|                                                      |\n" +
+		                                      "| license: GNU GPL v2                                  |\n" +
+		                                      "|                                                      |\n" +
+		                                      " ------------------------------------------------------\n";
+		str_usage							= "usage example for one-to-one communication:\n" +
+		                                      "java SimpleNetworkCommunicator [ADDRESS] [PORT]\n";
+		str_group_file						= "src/br/com/bdslabs/snc/dev/.group.csv";
+		str_id_file							= "src/br/com/bdslabs/snc/dev/.id.csv";
+		str_Line							= "";
+		operatingSystemSpecific				= new OperatingSystemSpecific();
+		messageStringBuilder				= new StringBuilder();
+		discoverOSStringBuilderArray		= operatingSystemSpecific.identifyOSStringBuilderArray();
 		
 	    /* Reads id file (one line). */
-		readCSVBufferedReader			= parseCSV(str_id_file);
-	    str_IDFileValuesArray			= (str_Line = readCSVBufferedReader.readLine()) != null ? str_Line.split("\" *, *\"") : null;
+		readCSVBufferedReader				= parseCSV(str_id_file);
+	    str_IDFileValuesArray				= (str_Line = readCSVBufferedReader.readLine()) != null ? str_Line.split("\" *, *\"") : null;
 
 /*
  *********************************************************************
@@ -412,9 +414,9 @@ public class SimpleNetworkCommunicator{
 		
 		if (discoverOSStringBuilderArray[1].equals("FLAG")){
 			
-			int_error_code = 6;
-			System.err.print("\nException " + int_error_code + ": operating system not allowed.\n");
-			System.exit(int_error_code);
+			remotePortAndErrorCodeIntArray[1] = 6;
+			System.err.print("\nException " + remotePortAndErrorCodeIntArray[1] + ": operating system not allowed.\n");
+			System.exit(remotePortAndErrorCodeIntArray[1]);
 		}
 		
 		operatingSystemSpecific.clearConsole(discoverOSStringBuilderArray[0].indexOf("indows") != -1);
@@ -477,50 +479,53 @@ public class SimpleNetworkCommunicator{
 			System.out.print("\nChoose action and hit enter:\n" +
                              "\n" +
                              "0) quit\n" +
-                             "1) send text\n" +
-                             "2) send file\n");
+                             "1) listen\n" +
+                             "2) send text\n" +
+                             "3) send file\n");
+			
+			int_action = Integer.parseInt(scannerScanner.next());
 
-			/* Who needs threads? :-) */
-			while ((int_action = Integer.parseInt(scannerScanner.next())) == -1){
-			
-				/* Play the server role. */
-				int_error_code = peerPeer.playServer();
-			}
-			
 			switch(int_action){
 			
-			case 0: {
+				case 0: {
+					
+					System.out.print("\nSo long.\n");
+					System.exit(remotePortAndErrorCodeIntArray[1]);
+					break;
+				}
+			
+				/* Play the server role. */
+				case 1: {
 				
-				System.out.print("\nSo long.\n");
-				System.exit(int_error_code);
-				break;
-			}
-		
-			/* Play the client role. */
-			case 1: {
+					remotePortAndErrorCodeIntArray = peerPeer.playServer();
+					break;
+				}
+				
+				/* Play the client role. */
+				case 2: {
+				
+					peerPeer.playClient(messageStringBuilder);
+					break;
+				}
 			
-				peerPeer.playClient(messageStringBuilder);
-				break;
-			}
-		
-			/* Send file. */
-			case 2: {
-
-				peerPeer.playSeeder(new StringBuilder());
-				break;
-			}
-		
-			default: {
+				/* Send file. */
+				case 3: {
+	
+					peerPeer.playSeeder(new StringBuilder());
+					break;
+				}
 			
-				break;
+				default: {
+				
+					break;
+				}
 			}
-		}
 			
 			scannerScanner.close();
 		
-		} while (int_error_code != 0 && int_action != 0);
+		} while (remotePortAndErrorCodeIntArray[1] != 0 && int_action != 0);
 
-		System.exit(int_error_code);
+		System.exit(remotePortAndErrorCodeIntArray[1]);
 	} /* Method main() end. */
 
 } /* Class SimpleNetworkCommunicator end. */

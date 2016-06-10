@@ -177,14 +177,17 @@ public class Peer{
  */
 
 /**
- * Initially, any server blocks and listens.
+ * Initially, any server blocks and listens to a given port.
  * Opens socket(s) and stream(s), communicate, and then close them
  * all.
  * Method chooses a TCP stream over UDP.
- * @return 
+ * 
+ * @return int_ret
+ * Position 0 shelters the local port to listen to, and position 1 is
+ * the error code.
  * 
  */
-	public int playServer() throws UnknownHostException, IOException{
+	public int[] playServer() throws UnknownHostException, IOException{
 
 /*
  *********************************************************************
@@ -193,14 +196,14 @@ public class Peer{
  *********************************************************************
  */
 		
-		int					int_error_code;
-
 		/* TCP stream(s) used to read text received from server. */
 		DataInputStream		serverDataInputStream;
 		
 		/* TCP stream(s) used to send text to server. */
 		DataOutputStream	serverDataOutputStream;
 		PrintStream			printStream;
+		
+		int[]				int_ret;
 		
 		ServerSocket		serverSocket;
 		Socket				newServerSocket;
@@ -213,16 +216,21 @@ public class Peer{
  *********************************************************************
  */
 		
-		int_error_code					= -1;
-		
 		serverDataInputStream			= null;
 		
 		serverDataOutputStream			= null;
 		printStream						= null;
 		
-		/* Opens a server socket and starts listening (accepting). */
+		int_ret							= new int[2];
+		int_ret[1]						= -1;
+		
+		/* Opens a server socket. */
 		serverSocket					= new ServerSocket(0);
-		newServerSocket					= serverSocket.accept();
+		int_ret[0]						= serverSocket.getLocalPort();
+		System.out.print("\nlistening on port:\t" + int_ret[0] + "\n");		
+		/* Server socket starts listening (accepting). */
+		newServerSocket								= serverSocket.accept();
+
 		
 		messageFromClientStringBuilder	= new StringBuilder();
 
@@ -234,7 +242,7 @@ public class Peer{
  */
 
 		try{
-
+			
 			/* Opens stream to read from client. */
 			serverDataInputStream						= new DataInputStream(newServerSocket.getInputStream());
 			/* Opens stream to write to client. */
@@ -270,7 +278,7 @@ public class Peer{
 			System.err.print("\nException 005: unknown host.\n" +
 					         "Unknown host exception: " + unknownHostException.getMessage() + "\n");
 			unknownHostException.printStackTrace();
-			int_error_code = 5;
+			int_ret[1] = 5;
 		}
 
 		catch(IOException ioException){
@@ -279,7 +287,7 @@ public class Peer{
 			                 "Could not connect remote peer.\n" +
 					         "I/O exception: " + ioException.getMessage() + "\n");
 			ioException.printStackTrace();
-			int_error_code = 4;
+			int_ret[1] = 4;
 		}
 		
 		finally{
@@ -289,7 +297,7 @@ public class Peer{
 			newServerSocket.close();
 		}
 		
-		return int_error_code;
+		return int_ret;
 	} // playServer() method end.
 
 /**
