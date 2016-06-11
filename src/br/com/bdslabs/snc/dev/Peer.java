@@ -225,6 +225,7 @@ public class Peer{
 		int_ret[1]						= -1;
 		
 		/* Opens a server socket. */
+		// serverSocket					= new ServerSocket(51352);
 		serverSocket					= new ServerSocket(0);
 		int_ret[0]						= serverSocket.getLocalPort();
 		System.out.print("\nlistening on port:\t" + int_ret[0] + "\n");		
@@ -352,8 +353,6 @@ public class Peer{
  */
 		
 		try{
-			
-			System.out.print("\nType your message and hit enter to send it to the group.\n");
 
 			for (int int_remote_peers = 0; int_remote_peers < this.strRemoteAddresses.length; int_remote_peers++){
 				

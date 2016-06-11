@@ -504,6 +504,8 @@ public class SimpleNetworkCommunicator{
 				/* Play the client role. */
 				case 2: {
 				
+					System.out.print("\nType your message and hit enter to send it to the group.\n");
+					messageStringBuilder.append(scannerScanner.nextLine());
 					peerPeer.playClient(messageStringBuilder);
 					break;
 				}
@@ -520,10 +522,9 @@ public class SimpleNetworkCommunicator{
 					break;
 				}
 			}
-			
-			scannerScanner.close();
-		
 		} while (remotePortAndErrorCodeIntArray[1] != 0 && int_action != 0);
+		
+		scannerScanner.close();
 
 		System.exit(remotePortAndErrorCodeIntArray[1]);
 	} /* Method main() end. */
