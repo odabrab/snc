@@ -1,5 +1,5 @@
-  O diretório "doc" abriga os documentos do projeto.
-  A aplicação procura ser minimalista, e tal qual ensina a matemática, implementa Berkeley Sockets da forma mais simples possível.
-  Tem-se 2 classes: SimpleNetworkCommunicator (que possui o método main) e Peer.
-  
+README
 
+As of 2016, Simple Network Communicator stands as a didactic project for UNIX Berkeley Sockets.
+Directory "doc/" shelters project's documentation.
+Application seeks to be minimal. Thus, communication is elegantly implemented in a peer-to-peer fashion. Two classes only: SimpleNetworkCommunicator, which holds the main() method, and Peer. And that is it.
