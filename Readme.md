@@ -81,7 +81,11 @@
   --------------------------------------------------------------------
   -->
 ## INTRODUCTION
+SNC, and socket programming stand as a personal hobby of Marcio Barbado Junior, and as a matter of fact, they also help him as a programmer, researcher and teacher, in his network-related projects.
+
 As of 2024, Simple Network Communicator (SNC) stands as a didactic project for UNIX Berkeley Sockets in C, Java, and Python as well. In all of its versions, the application seeks to be minimal. Thus, communication is elegantly implemented in a peer-to-peer fashion.
+
+SNC lives in a distributed version control network of repos. One's able to find its public repos on [GitHub](https://github.com/odabrab/snc) and [SourceForge](https://sourceforge.net/projects/aps-5/) services.
 
 <!--
   --------------------------------------------------------------------
@@ -165,7 +169,11 @@ The lib/ directory shelters content being used somewhere in this directory, as l
 ### DIRECTORY: sw/
 The sw/ directory shelters both binary and text executable files which do not belong to the lib/ directory, e.g., the sw/exe/ subdirectory, previously named sw/bin/, and the sw/src/ subdirectory, which shelters sources. Also, the install.sh file do not belong to this directory.
 
-As for the Java implementation, there are two classes only: SimpleNetworkCommunicator, which holds the main() method, and Peer. And that is it. The main class is br.com.bdslabs.snc.dev.SimpleNetworkCommunicator.
+As for the C implementation, the original one, the socket is implemented as a library.
+
+As for the Java implementation, the first to be published, there are two classes only: SimpleNetworkCommunicator, which holds the main() method, and Peer. And that is it. The main class is br.com.bdslabs.snc.dev.SimpleNetworkCommunicator.
+
+As for the Python 3 implementation, the code and comments use a lot of Portuguese, because it is used in Marcio's classes for Brazilian students.
 
 ### FILE: .gitignore
 
