@@ -81,7 +81,7 @@
   --------------------------------------------------------------------
   -->
 ## INTRODUCTION
-SNC, and socket programming stand as a personal hobby of Marcio Barbado Junior, and as a matter of fact, they also help him as a programmer, researcher and teacher, in his network-related projects.
+SNC, and socket programming stand as a personal hobby of the author and some friends of him. As a matter of fact, they also help him as a programmer, researcher and teacher, in his network-related activities and projects.
 
 As of 2024, Simple Network Communicator (SNC) stands as a didactic project for UNIX Berkeley Sockets in C, Java, and Python as well. In all of its versions, the application seeks to be minimal. Thus, communication is elegantly implemented in a peer-to-peer fashion.
 
