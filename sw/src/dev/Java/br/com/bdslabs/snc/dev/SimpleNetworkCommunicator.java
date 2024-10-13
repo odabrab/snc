@@ -1,11 +1,11 @@
 /*
  *********************************************************************
  *********************************************************************
- *******	LICENSE (LICENCA): GNU GPL v2
+ *******  LICENSE (LICENCA): GNU GPL v2
  *******
- *******	File "SimpleNetworkCommunicator.java".
+ *******  File "SimpleNetworkCommunicator.java".
  *******
- *******	Copyright (c) 2016 Anderson Misson
+ *******  Copyright (c) 2016   Anderson Misson
  *******                       Danilo de Araujo Vasconcellos
  *******                       Marcio Barbado, Jr.
  *******                       Marcos Roberto de Menezes

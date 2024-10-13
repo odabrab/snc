@@ -161,7 +161,7 @@ This section covers dependencies of many types, e.g., packages, programming lang
 ### DIRECTORY: .ignore/
 
 ### DIRECTORY: doc/
-Directory "doc/" shelters the project's documentation.
+Directory doc/ shelters the project's documentation. It even includes a file regarding its original submission, when Marcio was a computer science student. That is kept for historical reasons.
 
 ### DIRECTORY: lib/
 The lib/ directory shelters content being used somewhere in this directory, as long as the referred content do not belong to the src/ directory. Examples of content are software code (binaries, sources and/or scripts) and PNG files.
@@ -183,6 +183,7 @@ As for the Python 3 implementation, the code and comments use a lot of Portugues
 The .relations.txt file, sometimes present, resembles what software engineering calls a traceability matrix. It relates this project with others.
 
 ### FILE: .rsyncignore
+Besides having its versions controlled, this project adopts an rsync-based backup strategy, and this is the reason why the .rsyncignore file exists.
 
 ### FILE: install.sh
 
@@ -195,7 +196,7 @@ The .relations.txt file, sometimes present, resembles what software engineering 
   --------------------------------------------------------------------
   -->
 ## HISTORY AND RELEASE NOTES
-In 2024, SNC was updated with C and Python implementations.
+SNC was originally published as a [SourceForge Git repo](https://sourceforge.net/projects/aps-5/) in 2024. In 2024, it was updated with C and Python implementations.
 
 <!--
   --------------------------------------------------------------------
